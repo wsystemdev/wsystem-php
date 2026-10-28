@@ -68,6 +68,8 @@ $ws->kybCheck('BE0403170701');
 $ws->einvoiceRoute('0208:0403170701');                 // Peppol participant lookup
 $ws->einvoiceValidate($xml, ['rules' => 'xrechnung']); // EN 16931 / XRechnung / Peppol BIS
 $ws->einvoiceValidate(base64_encode($pdf), ['base64' => true]); // ZUGFeRD / Factur-X PDF
+$ws->einvoiceParse($incomingXml);                    // read incoming XRechnung/ZUGFeRD as JSON
+$ws->einvoiceParse(base64_encode($pdf), ['base64' => true]); // ZUGFeRD / Factur-X PDF to JSON
 $ws->einvoiceCreate($ws->einvoiceSample());            // build UBL from JSON
 $ws->usage();
 $ws->plans();

@@ -69,6 +69,10 @@ check('einvoiceValidate POST body + rules query', $last['m'] === 'POST' && $last
     && json_decode($last['b'], true) === ['xml' => '<Invoice/>'] && $last['h']['Content-Type'] === 'application/json');
 $ws->einvoiceValidate('JVBERi0=', ['base64' => true]);
 check('einvoiceValidate base64 body, no rules', json_decode($last['b'], true) === ['base64' => 'JVBERi0='] && !str_contains($last['u'], '?'));
+$ws->einvoiceParse('<Invoice/>');
+check('einvoiceParse POST xml body', $last['m'] === 'POST' && $last['u'] === 'http://localhost:8000/einvoice/parse' && json_decode($last['b'], true) === ['xml' => '<Invoice/>']);
+$ws->einvoiceParse('JVBERi0=', ['base64' => true]);
+check('einvoiceParse base64 body', json_decode($last['b'], true) === ['base64' => 'JVBERi0=']);
 $ws->verifyVatBatch(['a' => 'DE811569869', 'b' => 'FR40303265045']);
 check('verifyVatBatch list body', json_decode($last['b'], true) === ['vats' => ['DE811569869', 'FR40303265045']]);
 $ws->einvoiceRoute('0208:0403170701');

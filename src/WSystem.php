@@ -13,7 +13,7 @@ namespace WSystem;
  */
 class WSystem
 {
-    public const VERSION = '0.1.0';
+    public const VERSION = '0.2.0';
     public const DEFAULT_BASE_URL = 'https://api.wsystem.dev';
 
     private ?string $apiKey;
@@ -188,6 +188,21 @@ class WSystem
         $body = !empty($opts['base64']) ? ['base64' => $xml] : ['xml' => $xml];
 
         return $this->request('POST', '/einvoice/validate', ['rules' => $opts['rules'] ?? null], $body);
+    }
+
+    /**
+     * Read an incoming UBL, CII, XRechnung or ZUGFeRD/Factur-X invoice into one JSON shape
+     * (parties, dates, references, totals, VAT breakdown, payment/IBAN, lines). Values come back
+     * as written; this does not validate (use einvoiceValidate for that).
+     * Pass a PDF with ['base64' => true] and base64_encode()d content.
+     *
+     * @param array{base64?:bool} $opts
+     */
+    public function einvoiceParse(string $xml, array $opts = []): array
+    {
+        $body = !empty($opts['base64']) ? ['base64' => $xml] : ['xml' => $xml];
+
+        return $this->request('POST', '/einvoice/parse', [], $body);
     }
 
     /** @param array<string,mixed> $invoice */
