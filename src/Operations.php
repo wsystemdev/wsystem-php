@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-// Generated from the W System OpenAPI 0.3.130 by growth/sdk/gen.py. Do not edit by hand.
+// Generated from the W System OpenAPI 0.3.131 by growth/sdk/gen.py. Do not edit by hand.
 
 namespace WSystem;
 
-/** All 57 operations of the W System API (spec 0.3.130). */
+/** All 57 operations of the W System API (spec 0.3.131). */
 abstract class Operations
 {
-    public const SPEC_VERSION = '0.3.130';
+    public const SPEC_VERSION = '0.3.131';
     /** @var list<array{0:string,1:string,2:string}> operationId, method, path */
     public const OPERATIONS = [
         ['billingPlans', 'GET', '/billing/plans'],
