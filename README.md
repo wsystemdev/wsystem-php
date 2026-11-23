@@ -56,6 +56,19 @@ Optional config in `config/services.php`:
 'wsystem' => ['key' => env('WSYSTEM_API_KEY'), 'timeout' => 30],
 ```
 
+## New in 0.3: every operation, ZUGFeRD, credit notes, typed errors
+
+Each of the 57 API operations is a method named after its OpenAPI `operationId` (`createEinvoice`, `sendEinvoice`, `listInboxInvoices`, `ksefConnect`, ...). Path and required query parameters come first, then the body, then `$params` (optional query) and `$options`.
+
+```php
+$pdf = $ws->einvoiceCreatePdf(['type_code' => '381', 'preceding_invoice' => 'RE-1', 'preceding_invoice_date' => '2026-10-18' /* ... */]); // ZUGFeRD credit note PDF bytes
+$sample = $ws->einvoiceSample(['type' => 'credit_note']);
+$ws->sendEinvoice($body, [], ['requestId' => 'req-1', 'idempotencyKey' => 'order-1042', 'timeout' => 10, 'maxRetries' => 3]);
+try { $ws->verifyVat('x'); } catch (\WSystem\RateLimitException $e) { echo $e->retryAfter(), $e->requestId, $e->errorCode(); }
+```
+
+Examples for every operation in curl, Python, Node and PHP: https://wsystem.dev/api-examples
+
 ## Everything else
 
 ```php

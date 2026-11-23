@@ -121,5 +121,83 @@ $r = rule(200, '{"status":"valid","valid":true,"name":"X"}');
 runRule($r, ' BE0403170701 ');
 check('rule: result() exposes answer', ($r->result()['name'] ?? null) === 'X');
 
+// 6. 0.3: full coverage, typed errors, retries, pass-through headers
+require_once __DIR__ . '/../src/WSystemException.php';
+foreach (['BadRequest', 'Authentication', 'PaymentRequired', 'NotFound', 'Conflict', 'RateLimit', 'Server', 'Connection', 'Timeout'] as $c) {
+    require_once __DIR__ . "/../src/{$c}Exception.php";
+}
+$ops = \WSystem\Operations::OPERATIONS;
+check('57 operations in spec', count($ops) === 57 && \WSystem\Operations::SPEC_VERSION !== '');
+$allCallable = true;
+foreach ($ops as [$id, $method, $path]) {
+    $last = null;
+    $ws = new WSystem(['apiKey' => 'k_test', 'transport' => fake(200, '{"ok":true}', $last)]);
+    $rm = new ReflectionMethod($ws, $id);
+    $args = [];
+    foreach ($rm->getParameters() as $p) {
+        if ($p->isOptional()) {
+            break;
+        }
+        $t = (string) $p->getType();
+        $args[] = ($p->getName() === 'body' || str_contains($t, 'array')) ? ($p->getName() === 'vats' || $p->getName() === 'eoris' ? ['x1'] : ['a' => 1]) : 'x1';
+    }
+    $out = $ws->$id(...$args);
+    $depth = substr_count(parse_url($last['u'], PHP_URL_PATH), '/') === substr_count($path, '/');
+    if ($last['m'] !== $method || !$depth || ($out['ok'] ?? null) !== true || $last['h']['X-API-Key'] !== 'k_test') {
+        $allCallable = false;
+        echo "  coverage problem: $id\n";
+    }
+}
+check('all 57 operations callable with the right method and path', $allCallable);
+
+$ws = new WSystem(['transport' => fake(200, '{}', $last)]);
+$ws->sendEinvoice(['x' => 1], [], ['requestId' => 'req-1', 'idempotencyKey' => 'idem-1', 'headers' => ['X-Trace' => 't']]);
+check('request id, idempotency key and extra headers pass through', $last['h']['X-Request-Id'] === 'req-1' && $last['h']['Idempotency-Key'] === 'idem-1' && $last['h']['X-Trace'] === 't');
+$ws->validateEinvoice('<Invoice/>');
+check('xml body content type', $last['h']['Content-Type'] === 'application/xml' && $last['b'] === '<Invoice/>');
+$ws->validateEinvoice('%PDF-1.7 x');
+check('pdf body content type', $last['h']['Content-Type'] === 'application/pdf');
+
+$pdf = '%PDF-1.7 test';
+$ws = new WSystem(['transport' => fake(200, json_encode(['valid' => true, 'pdf_base64' => base64_encode($pdf)]), $last)]);
+$out = $ws->einvoiceCreatePdf(['type_code' => '381', 'preceding_invoice' => 'RE-1', 'preceding_invoice_date' => '2026-11-01']);
+$sent = json_decode($last['b'], true);
+check('zugferd credit note: PDF bytes and request body', $out === $pdf && $sent['format'] === 'zugferd' && $sent['type_code'] === '381' && $sent['preceding_invoice'] === 'RE-1');
+$ws->einvoiceSample(['type' => 'credit_note']);
+check('sample type', str_ends_with($last['u'], '/einvoice/sample?type=credit_note'));
+try {
+    WSystem::decodePdf(['valid' => true]);
+    check('decodePdf without pdf throws', false);
+} catch (InvalidArgumentException) {
+    check('decodePdf without pdf throws', true);
+}
+
+foreach ([400 => 'BadRequest', 422 => 'BadRequest', 401 => 'Authentication', 403 => 'Authentication', 402 => 'PaymentRequired', 404 => 'NotFound', 409 => 'Conflict', 500 => 'Server'] as $st => $cls) {
+    $cls = "WSystem\\{$cls}Exception";
+    $tr = static fn () => [$st, '{"error":"missing_input","message":"needs input","docs":"https://api.wsystem.dev/docs"}', ['X-Request-Id' => 'srv-9']];
+    try {
+        (new WSystem(['transport' => $tr, 'maxRetries' => 0]))->verifyVat('x');
+        check("$st throws", false);
+    } catch (WSystemException $e) {
+        check("$st -> $cls with code, docs, request id", $e instanceof $cls && $e->status === $st && $e->errorCode() === 'missing_input' && $e->docsUrl === 'https://api.wsystem.dev/docs' && $e->requestId === 'srv-9');
+    }
+}
+
+$calls = 0;
+$sleeps = [];
+$seq = [[503, '{}', []], [429, '{}', ['Retry-After' => '2']], [200, '{"ok":1}', []]];
+$ws = new WSystem(['sleeper' => static function (float $s) use (&$sleeps): void { $sleeps[] = $s; }, 'transport' => static function () use (&$calls, $seq): array { return $seq[$calls++]; }]);
+check('GET retried on 503/429 with Retry-After', $ws->viesStatus() === ['ok' => 1] && $calls === 3 && $sleeps[1] === 2.0);
+$calls = 0;
+$ws = new WSystem(['sleeper' => static function (float $s): void {}, 'transport' => static function () use (&$calls): array { $calls++; return [503, '{}', []]; }]);
+try { $ws->sendEinvoice(['a' => 1]); } catch (\WSystem\ServerException) {}
+check('POST not retried without idempotency key', $calls === 1);
+$calls = 0;
+try { $ws->sendEinvoice(['a' => 1], [], ['idempotencyKey' => 'k']); } catch (\WSystem\ServerException) {}
+check('POST retried with idempotency key (3 attempts)', $calls === 3);
+$calls = 0;
+$ws = new WSystem(['maxRetries' => 1, 'sleeper' => static function (float $s): void {}, 'transport' => static function () use (&$calls): array { $calls++; throw new \WSystem\TimeoutException('t'); }]);
+try { $ws->viesStatus(); check('timeout throws', false); } catch (\WSystem\TimeoutException $e) { check('timeout is a ConnectionException, retried once', $e instanceof \WSystem\ConnectionException && $calls === 2); }
+
 echo PHP_EOL . ($n - $fails) . "/$n passed" . PHP_EOL;
 exit($fails ? 1 : 0);

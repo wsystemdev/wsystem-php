@@ -1,13 +1,13 @@
 <?php
-// Live smoke test against https://api.wsystem.dev (uses the free tier, a few calls). Run: php tests/live_smoke.php
+// Live smoke test against https://api.wsystem.dev. Run: WSYSTEM_API_KEY=... php tests/live_smoke.php (key is never printed)
 declare(strict_types=1);
-require __DIR__ . '/../src/WSystemException.php';
-require __DIR__ . '/../src/WSystem.php';
+foreach (['WSystemException', 'BadRequestException', 'AuthenticationException', 'PaymentRequiredException', 'NotFoundException', 'ConflictException', 'RateLimitException', 'ServerException', 'ConnectionException', 'TimeoutException', 'Operations', 'WSystem'] as $f) {
+    require_once __DIR__ . "/../src/$f.php";
+}
 $ws = new WSystem\WSystem();
 $r = $ws->verifyVat('BE0403170701');
 echo 'verifyVat: ', $r['status'], ' ', $r['name'] ?? '', PHP_EOL;
-$s = $ws->viesStatus();
-echo 'viesStatus: ', is_array($s) ? 'ok' : 'unexpected', PHP_EOL;
-$x = $ws->einvoiceSample();
-echo 'einvoiceSample: ', is_string($x) ? strlen($x) . ' bytes' : json_encode(array_keys((array) $x)), PHP_EOL;
-exit(($r['valid'] ?? null) === true ? 0 : 1);
+$sample = $ws->einvoiceSample(['type' => 'credit_note']);
+$res = $ws->einvoiceCreate(['format' => 'zugferd'] + $sample);
+echo 'zugferd credit note: valid=', json_encode($res['valid'] ?? null), ' pdf=', isset($res['pdf_base64']) ? 'yes' : 'no', PHP_EOL;
+exit(($r['valid'] ?? null) === true && ($res['valid'] ?? null) === true && !empty($res['pdf_base64']) ? 0 : 1);

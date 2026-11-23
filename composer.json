@@ -1,6 +1,6 @@
 {
     "name": "wsystem/wsystem-php",
-    "description": "Zero-dependency PHP client for the W System API: EU VAT (VIES) and EORI validation, company registers, sanctions screening, KYB and EU e-invoicing (EN 16931 / XRechnung validation, UBL creation, Peppol routing). Includes an optional Laravel 'eu_vat' validation rule.",
+    "description": "Zero-dependency PHP client for the W System API (all 57 operations, ZUGFeRD PDF, credit notes, typed errors, retries): EU VAT (VIES) and EORI validation, company registers, sanctions screening, KYB and EU e-invoicing (EN 16931 / XRechnung validation, UBL creation, Peppol routing). Includes an optional Laravel 'eu_vat' validation rule.",
     "type": "library",
     "license": "MIT",
     "keywords": ["vies", "vat", "vat-validation", "eu-vat", "eori", "peppol", "xrechnung", "zugferd", "en16931", "e-invoice", "laravel", "validation"],

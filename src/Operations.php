@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-// Generated from the W System OpenAPI 0.3.128 by growth/sdk/gen.py. Do not edit by hand.
+// Generated from the W System OpenAPI 0.3.130 by growth/sdk/gen.py. Do not edit by hand.
 
 namespace WSystem;
 
-/** All 57 operations of the W System API (spec 0.3.128). */
+/** All 57 operations of the W System API (spec 0.3.130). */
 abstract class Operations
 {
-    public const SPEC_VERSION = '0.3.128';
+    public const SPEC_VERSION = '0.3.130';
     /** @var list<array{0:string,1:string,2:string}> operationId, method, path */
     public const OPERATIONS = [
         ['billingPlans', 'GET', '/billing/plans'],
@@ -287,24 +287,6 @@ abstract class Operations
         return $this->request('GET', '/health', array_merge([], $params), null, $options);
     }
 
-    /** VIES availability per member state (free, cached 5 min)  (GET /vies/status) */
-    public function viesStatus(array $params = [], array $options = []): mixed
-    {
-        return $this->request('GET', '/vies/status', array_merge([], $params), null, $options);
-    }
-
-    /** Validate one EU VAT number (VIES)  (GET /verify) */
-    public function verifyVat(string|int|float|bool $vat, array $params = [], array $options = []): mixed
-    {
-        return $this->request('GET', '/verify', array_merge(['vat' => $vat], $params), null, $options);
-    }
-
-    /** Validate up to 100 EU VAT numbers  (POST /verify/batch) */
-    public function verifyVatBatch(mixed $body, array $params = [], array $options = []): mixed
-    {
-        return $this->request('POST', '/verify/batch', array_merge([], $params), $body, $options);
-    }
-
     /** Look up a company in official EU business registers  (GET /company) */
     public function lookupCompany(string|int|float|bool $q, array $params = [], array $options = []): mixed
     {
@@ -329,24 +311,6 @@ abstract class Operations
         return $this->request('POST', '/sanctions/screen/batch', array_merge([], $params), $body, $options);
     }
 
-    /** One-call KYB: VAT + registry + sanctions -> verdict  (POST /kyb/check) */
-    public function kybCheck(mixed $body, array $params = [], array $options = []): mixed
-    {
-        return $this->request('POST', '/kyb/check', array_merge([], $params), $body, $options);
-    }
-
-    /** Validate one EU EORI number (EC EOS)  (GET /eori) */
-    public function verifyEori(string|int|float|bool $eori, array $params = [], array $options = []): mixed
-    {
-        return $this->request('GET', '/eori', array_merge(['eori' => $eori], $params), null, $options);
-    }
-
-    /** Validate up to 100 EU EORI numbers  (POST /eori/batch) */
-    public function verifyEoriBatch(mixed $body, array $params = [], array $options = []): mixed
-    {
-        return $this->request('POST', '/eori/batch', array_merge([], $params), $body, $options);
-    }
-
     /** Validate an EU e-invoice (EN 16931, XRechnung; UBL, CII, ZUGFeRD/Factur-X PDF)  (POST /einvoice/validate) */
     public function validateEinvoice(mixed $body, array $params = [], array $options = []): mixed
     {
@@ -365,12 +329,6 @@ abstract class Operations
         return $this->request('POST', '/einvoice/create', array_merge([], $params), $body, $options);
     }
 
-    /** "Can I e-invoice this company?" VAT + Peppol + country mandate lookup  (GET /einvoice/route) */
-    public function einvoiceRoute(string|int|float|bool $id, array $params = [], array $options = []): mixed
-    {
-        return $this->request('GET', '/einvoice/route', array_merge(['id' => $id], $params), null, $options);
-    }
-
     /** Counterparty due-diligence report (VAT, register, sanctions, EORI, LEI, Peppol) with risk flags  (POST /ddreport) */
     public function ddReport(mixed $body, array $params = [], array $options = []): mixed
     {
@@ -387,12 +345,6 @@ abstract class Operations
     public function extractEinvoiceFromPdf(mixed $body = null, array $params = [], array $options = []): mixed
     {
         return $this->request('POST', '/einvoice/extract', array_merge([], $params), $body, $options);
-    }
-
-    /** Example JSON body for POST /einvoice/create (free)  (GET /einvoice/sample) */
-    public function einvoiceSample(array $params = [], array $options = []): mixed
-    {
-        return $this->request('GET', '/einvoice/sample', array_merge([], $params), null, $options);
     }
 
     /** SANDBOX: verify buyer -> create -> validate -> route -> transmit (mock or partner Peppol sandbox) -> signed evidence receipt  (POST /einvoice/send) */
